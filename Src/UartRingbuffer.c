@@ -63,7 +63,9 @@ void store_char(unsigned char c, ring_buffer *buffer)
   }
 }
 
-int Look_for (char *str, char *buffertolookinto)
+/* checks, if the entered string is present in the giver buffer ?
+ */
+static int check_for (char *str, char *buffertolookinto)
 {
 	int stringlength = strlen (str);
 	int bufferlength = strlen (buffertolookinto);
@@ -111,15 +113,13 @@ int Uart_read(void)
   }
 }
 
+/* writes a single character to the uart and increments head
+ */
 void Uart_write(int c)
 {
 	if (c>=0)
 	{
 		int i = (_tx_buffer->head + 1) % UART_BUFFER_SIZE;
-
-		// If the output buffer is full, there's nothing for it other than to
-		// wait for the interrupt handler to empty it a bit
-		// ???: return 0 here instead?
 		while (i == _tx_buffer->tail);
 
 		_tx_buffer->buffer[_tx_buffer->head] = (uint8_t)c;
@@ -129,34 +129,18 @@ void Uart_write(int c)
 	}
 }
 
+/* checks if the new data is available in the incoming buffer
+ */
 int IsDataAvailable(void)
 {
   return (uint16_t)(UART_BUFFER_SIZE + _rx_buffer->head - _rx_buffer->tail) % UART_BUFFER_SIZE;
 }
 
+/* sends the string to the uart
+ */
 void Uart_sendstring (const char *s)
 {
 	while(*s) Uart_write(*s++);
-}
-
-void Uart_printbase (long n, uint8_t base)
-{
-  char buf[8 * sizeof(long) + 1]; // Assumes 8-bit chars plus zero byte.
-  char *s = &buf[sizeof(buf) - 1];
-
-  *s = '\0';
-
-  // prevent crash if called with base == 1
-  if (base < 2) base = 10;
-
-  do {
-    unsigned long m = n;
-    n /= base;
-    char c = m - base * n;
-    *--s = c < 10 ? c + '0' : c + 'A' - 10;
-  } while(n);
-
-  while(*s) Uart_write(*s++);
 }
 
 void GetDataFromBuffer (char *startString, char *endString, char *buffertocopyfrom, char *buffertocopyinto)
@@ -234,7 +218,12 @@ int Uart_peek()
   }
 }
 
-
+/* copies the data from the incoming buffer into our buffer
+ * Must be used if you are sure that the data is being received
+ * it will copy irrespective of, if the end string is there or not
+ * if the end string gets copied, it returns 1 or else 0
+ * Use it either after (IsDataAvailable) or after (Wait_for) functions
+ */
 int Copy_upto (char *string, char *buffertocopyinto)
 {
 	int so_far =0;
@@ -242,7 +231,6 @@ int Copy_upto (char *string, char *buffertocopyinto)
 	int indx = 0;
 
 again:
-	while (!IsDataAvailable());
 	while (Uart_peek() != string[so_far])
 		{
 			buffertocopyinto[indx] = _rx_buffer->buffer[_rx_buffer->tail];
@@ -256,7 +244,9 @@ again:
 		so_far++;
 		buffertocopyinto[indx++] = Uart_read();
 		if (so_far == len) return 1;
-		while (!IsDataAvailable());
+		timeout = TIMEOUT_DEF;
+		while ((!IsDataAvailable())&&timeout);
+		if (timeout == 0) return 0;
 	}
 
 	if (so_far != len)
@@ -266,22 +256,28 @@ again:
 	}
 
 	if (so_far == len) return 1;
-	else return -1;
+	else return 0;
 }
 
+/* must be used after wait_for function
+ * get the entered number of characters after the entered string
+ */
 int Get_after (char *string, uint8_t numberofchars, char *buffertosave)
 {
-
-//	while (Wait_for(string) != 1);
 	for (int indx=0; indx<numberofchars; indx++)
 	{
-		while (!(IsDataAvailable()));
-		buffertosave[indx] = Uart_read();
+		timeout = TIMEOUT_DEF;
+		while ((!IsDataAvailable())&&timeout);  // wait until some data is available
+		if (timeout == 0) return 0;  // if data isn't available within time, then return 0
+		buffertosave[indx] = Uart_read();  // save the data into the buffer... increments the tail
 	}
 	return 1;
 }
 
-
+/* Waits for a particular string to arrive in the incoming buffer... It also increments the tail
+ * returns 1, if the string is detected
+ */
+// added timeout feature so the function won't block the processing of the other functions
 int Wait_for (char *string)
 {
 	int so_far =0;
@@ -289,22 +285,25 @@ int Wait_for (char *string)
 
 again:
 	timeout = TIMEOUT_DEF;
-	while ((!IsDataAvailable())&&timeout);
+	while ((!IsDataAvailable())&&timeout);  // let's wait for the data to show up
 	if (timeout == 0) return 0;
-	uint16_t indx = UART_BUFFER_SIZE;
-	while (Uart_peek() != string[so_far])
+	while (Uart_peek() != string[so_far])  // peek in the rx_buffer to see if we get the string
 	{
 		if (_rx_buffer->tail != _rx_buffer->head)
 		{
-			_rx_buffer->tail = (unsigned int)(_rx_buffer->tail + 1) % UART_BUFFER_SIZE;
+			_rx_buffer->tail = (unsigned int)(_rx_buffer->tail + 1) % UART_BUFFER_SIZE;  // increment the tail
 		}
 
-		else return 0;
+		else
+		{
+			return 0;
+		}
 	}
-	while (Uart_peek() == string [so_far])
+	while (Uart_peek() == string [so_far]) // if we got the first letter of the string
 	{
+		// now we will peek for the other letters too
 		so_far++;
-		Uart_read();
+		_rx_buffer->tail = (unsigned int)(_rx_buffer->tail + 1) % UART_BUFFER_SIZE;  // increment the tail
 		if (so_far == len) return 1;
 		timeout = TIMEOUT_DEF;
 		while ((!IsDataAvailable())&&timeout);
@@ -318,7 +317,7 @@ again:
 	}
 
 	if (so_far == len) return 1;
-	else return -1;
+	else return 0;
 }
 
 
