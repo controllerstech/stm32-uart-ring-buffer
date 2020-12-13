@@ -1,6 +1,6 @@
 # stm32-uart-ring-buffer
 
-##STEPS NEED TO BE FOLLOWED:-
+## STEPS NEED TO BE FOLLOWED:-
 
 **1. Put the following statements in the interrupt.c file**
 ```
