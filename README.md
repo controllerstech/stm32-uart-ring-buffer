@@ -22,5 +22,21 @@ void SysTick_Handler(void)
   /* USER CODE END SysTick_IRQn 1 */
 }
 ```
+3. Modify the Uart_IRQ_Handler according to uart that you are using.. like shown below
 
-3. put the ```Ringbuf_init ();``` in the main function and you are good to go
+```
+void USART2_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART2_IRQn 0 */
+
+	Uart_isr (&huart2);
+
+  /* USER CODE END USART2_IRQn 0 */
+//  HAL_UART_IRQHandler(&huart2);
+  /* USER CODE BEGIN USART2_IRQn 1 */
+
+  /* USER CODE END USART2_IRQn 1 */
+}
+```
+
+4. put the ```Ringbuf_init ();``` in the main function and you are good to go
