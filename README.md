@@ -40,3 +40,12 @@ void USART2_IRQHandler(void)
 ```
 
 4. put the ```Ringbuf_init ();``` in the main function and you are good to go
+
+
+**F7 series** needs a different ISR code. Just replace the **Uart_isr in ringbuffer.c** file with the following
+https://controllerstech.com/wp-content/uploads/2020/04/Uart_Isr_single.c
+
+
+
+**G series and L4 series** needs a different ISR code. Just replace the **Uart_isr in ringbuffer.c** file with the following
+https://controllerstech.com/wp-content/uploads/2020/08/Uart_Isr_single_new.c
