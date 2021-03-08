@@ -204,6 +204,7 @@ void Uart_flush (void)
 {
 	memset(_rx_buffer->buffer,'\0', UART_BUFFER_SIZE);
 	_rx_buffer->head = 0;
+	_rx_buffer->tail = 0;
 }
 
 int Uart_peek()
