@@ -5,7 +5,7 @@
 **1. Put the following statements in the interrupt.c file**
 ```
   extern void Uart_isr (UART_HandleTypeDef *huart);
-  extern volatile uint16_t timeout;
+  extern uint16_t timeout;
 ```
 **2. Change the systick handler in the interrupt.c file again**
 ```
@@ -29,7 +29,7 @@ void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
 
-	Uart_isr (&huart2);
+  Uart_isr (&huart2);
 
   /* USER CODE END USART2_IRQn 0 */
 //  HAL_UART_IRQHandler(&huart2);
