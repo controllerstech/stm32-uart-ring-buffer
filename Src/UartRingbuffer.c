@@ -22,6 +22,7 @@ uint16_t timeout;
 /* put the following in the ISR 
 
 extern void Uart_isr (UART_HandleTypeDef *huart);
+extern uint16_t timeout;
 
 */
 
