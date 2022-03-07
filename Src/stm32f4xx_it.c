@@ -53,7 +53,7 @@
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-extern volatile uint16_t timeout;
+extern uint16_t timeout;
 
 /* USER CODE END 0 */
 
@@ -186,7 +186,7 @@ void SysTick_Handler(void)
 {
   /* USER CODE BEGIN SysTick_IRQn 0 */
 
-	  if(timeout >0)  timeout--;
+  if(timeout >0)  timeout--;
 
   /* USER CODE END SysTick_IRQn 0 */
   HAL_IncTick();
@@ -209,7 +209,7 @@ void USART2_IRQHandler(void)
 {
   /* USER CODE BEGIN USART2_IRQn 0 */
 
-	Uart_isr (&huart2);
+  Uart_isr (&huart2);
 
   /* USER CODE END USART2_IRQn 0 */
 //  HAL_UART_IRQHandler(&huart2);
